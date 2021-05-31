@@ -106,7 +106,7 @@ class PsySuSpider(scrapy.Spider):
             if text and text.strip(): # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
                 # TODO 2 доработать обработку HTML - смайлики и т.д.
                 text = text.strip()
-                html = post.css('div.text p:').extract_first()
+                html = post.css('div.text p').extract_first()
                 scraped_info = {
                     'topic_id': topic_id,
                     'topic_name': topic_name,

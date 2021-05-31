@@ -72,7 +72,6 @@ class PsySuSpider(scrapy.Spider):
 
 
     def parse_topic(self, response):
-        print('  parsing:', response.url)
         topic_id, topic_name = get_topic_id_and_name(response)
 
         posts = response.css('table.forum tr')
@@ -102,7 +101,8 @@ class PsySuSpider(scrapy.Spider):
             author_url = post.css('td.author a:nth-child(3)::attr(href)').extract_first()
             author_id = None if author_url is None else get_id_from_url(author_url, 'profile')
             author_name = post.css('td.author a:nth-child(3)::text').extract_first()
-            text = post.xpath('./td//div[@class="text"]//text()').get()
+            text_arr = post.xpath('./td//div[@class="text"]//text()').getall()
+            text = '\n'.join(text_arr)
             html = post.xpath('./td//div[@class="text"]').get()
             if text and text.strip(): # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
                 # TODO 2 доработать обработку HTML - смайлики и т.д.
@@ -119,8 +119,8 @@ class PsySuSpider(scrapy.Spider):
                 rdy += 1
                 yield scraped_info # генерируем очищенную информацию для скрапа
             else:
-                print('bad:', author_name, idx, text, html)
-        print('  rdy:', response.url, rdy, 'from', len(posts))
+                print('bad:', author_name, idx, f'"{text}"', html)
+        print('  parsed:', response.url, rdy, 'from', len(posts))
 
         # Следующая страница топика
         next_topic_page = get_next_topic_page(response)

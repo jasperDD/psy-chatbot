@@ -4,6 +4,7 @@ import scrapy
 # https://pythonru.com/biblioteki/sozdanie-parserov-s-pomoshhju-scrapy-i-python
 
 NEXT_PAGE_SELECTOR = '#content div:nth-child(5) a::attr(href)'
+# Следующая страница в группе
 def get_next_page(response):
     page_url = response.url[len('https://psy.su'):-1] # Оканчивается на знак /
     pages = response.css(NEXT_PAGE_SELECTOR).extract()
@@ -16,6 +17,7 @@ def get_next_page(response):
         next_page = None if cur_index >= len(pages) - 1 else pages[cur_index + 1]
     return next_page
 
+# Следующая страница в топике
 def get_next_topic_page(response):
     page_url = response.url
     pages = response.css(NEXT_PAGE_SELECTOR).extract()
@@ -29,39 +31,39 @@ def get_next_topic_page(response):
         next_page = None if cur_index >= len(pages) else pages[cur_index]
     return next_page
 
+# Получить название и идентификатор топика на странице
 def get_topic_id_and_name(response):
     page_url = response.url
     topic_id = get_id_from_url(page_url, 'topic')
     topic_name = response.css('h1::text').extract_first()
     return topic_id, topic_name
 
+# Получить идентификатор топика или профиля автора из урл
 def get_id_from_url(url, type_name):
     url_el = url.split('/')
     id = url_el[url_el.index(type_name) + 1]
     return id
 
-
 class PsySuSpider(scrapy.Spider):
     name = 'psy_su'
     allowed_domains = ['psy.su']
     topics_dic = {}
-    # Группы тем
     start_urls = ['https://psy.su/club/forum/category/14/',  # Дети
                   'https://psy.su/club/forum/category/15/',  # Взрослые
                   'https://psy.su/club/forum/category/16/'  # Чрезвычайные ситуации
                   ]
 
     def parse(self, response):
-        print("procesing:" + response.url)
+        print('Procesing:', response.url)
         topics =  response.xpath('//table[@class="forum"]//tr/td/a[contains(@href, "/club/forum/topic/")]/@href').getall()
 
-        # Проходим по всем топикам
+        # Следующий топик
         for topic_url in topics:
             yield scrapy.Request(
                 response.urljoin(topic_url),
                 callback=self.parse_topic)
 
-        # Когда топики на стриничке закончились, проходим по остальным страницам в группе
+        # Следующая страница группы
         next_page = get_next_page(response)
         if next_page:
             yield scrapy.Request(
@@ -70,30 +72,53 @@ class PsySuSpider(scrapy.Spider):
 
 
     def parse_topic(self, response):
+        print('  parsing:', response.url)
         topic_id, topic_name = get_topic_id_and_name(response)
-        posts = response.css('table.forum tr')
-        author_urls = posts.css('td.author a:nth-child(3)::attr(href)').extract()
-        author_names = posts.css('td.author a:nth-child(3)::text').extract()
-        texts = posts.css('td div.text p::text').extract()
-        htmls = posts.css('td div.text p').extract()
-        posts_data = zip(author_urls, author_names, texts, htmls)
 
-        for item in posts_data:
-            if item[2] and item[2].strip(): # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
+        posts = response.css('table.forum tr')
+        # author_urls = posts.css('td.author a:nth-child(3)::attr(href)').extract() # Этот вариант иногда неправильное скливает тексты с авторами
+        # author_names = posts.css('td.author a:nth-child(3)::text').extract()
+        # texts = posts.css('td div.text p::text').extract()
+        # htmls = posts.css('td div.text p').extract()
+        # posts_data = zip(author_urls, author_names, texts, htmls)
+        #
+        # for item in posts_data:
+        #     if item[2] and item[2].strip(): # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
+        #         # TODO 2 доработать обработку HTML - смайлики и т.д.
+        #         scraped_info = {
+        #             'topic_id': topic_id,
+        #             'topic_name': topic_name,
+        #             'url': response.url,
+        #             'author_id': None if item[0] is None else get_id_from_url(item[0], 'profile') ,
+        #             'author_name': item[1],
+        #             'text': item[2].strip(),
+        #             'html': item[3]
+        #         }
+        #         yield scraped_info  # генерируем очищенную информацию для скрапа
+
+        posts = posts[1:] # Первая строка заголовок
+        for post in posts:
+            author_el = post.css('.author')
+            author_url = author_el.css('a::attr(href)').extract_first()
+            author_id = None if author_url is None else get_id_from_url(author_url, 'profile')
+            author_name = post.css('a::text').extract_first()
+            text = post.css('div.text p::text').extract_first()
+            if text and text.strip(): # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
                 # TODO 2 доработать обработку HTML - смайлики и т.д.
+                text = text.strip()
+                html = post.css('div.text p:').extract_first()
                 scraped_info = {
                     'topic_id': topic_id,
                     'topic_name': topic_name,
                     'url': response.url,
-                    'author_id': None if item[0] is None else get_id_from_url(item[0], 'profile') ,
-                    'author_name': item[1],
-                    'text': item[2].strip(),
-                    'html': item[3]
+                    'author_id': author_id,
+                    'author_name': author_name,
+                    'text': text,
+                    'html': html
                 }
-            yield scraped_info  # генерируем очищенную информацию для скрапа
+                yield scraped_info # генерируем очищенную информацию для скрапа
 
-
-        # Проходим оставшиеся страницы топика
+        # Следующая страница топика
         next_topic_page = get_next_topic_page(response)
         if next_topic_page:
             yield scrapy.Request(

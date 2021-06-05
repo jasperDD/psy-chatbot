@@ -72,6 +72,7 @@ class PsySuSpider(scrapy.Spider):
 
 
     def parse_topic(self, response):
+        # TODO проверка что уже была эта страница распарсена. Т.к. есть дублеты например по топику 1962 - три раза или больше.
         topic_id, topic_name = get_topic_id_and_name(response)
 
         posts = response.css('table.forum tr')
@@ -104,7 +105,9 @@ class PsySuSpider(scrapy.Spider):
             text_arr = post.xpath('./td//div[@class="text"]//text()').getall()
             text = '\n'.join(text_arr)
             html = post.xpath('./td//div[@class="text"]').get()
-            if text and text.strip(): # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
+            if text and text.strip(): # TODO лучше все же сохранять None значения - например https://psy.su/club/forum/topic/1902/
+                # нет div.text т.к. сообщение удалено. Иначе не поймешь что там диалог, т.к. сообщения инициатора нет. По идее надо позже это обрабатывать. Чистить такие ветки.
+                # TODO доработать фильтр на удаляенные сообщения, а также реализовать парсинг по цитатам и возможно фильтр исходного сообщения
                 # TODO 2 доработать обработку HTML - смайлики и т.д.
                 text = text.strip()
                 scraped_info = {
@@ -119,7 +122,7 @@ class PsySuSpider(scrapy.Spider):
                 rdy += 1
                 yield scraped_info # генерируем очищенную информацию для скрапа
             else:
-                print('bad:', author_name, idx, f'"{text}"', html)
+                print('bad post:', author_name, idx, f'"{text}"', html)
         print('  parsed:', response.url, rdy, 'from', len(posts))
 
         # Следующая страница топика

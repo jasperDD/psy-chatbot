@@ -91,7 +91,8 @@ DOWNLOAD_DELAY = 3
 
 # Формат сохранения
 FEED_FORMAT="csv"
-FEED_URI="../data/data_%(name)s.csv"
+# FEED_URI="../data/data_%(name)_%(time).csv"
+FEED_URI="./data/data_%(name)s.csv"
 
 LOG_LEVEL='INFO'
 USER_AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 YaBrowser/21.5.1.330 Yowser/2.5 Safari/537.36'

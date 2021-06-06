@@ -3,6 +3,7 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.loader import ItemLoader
 from scrapy.http import Request
 from ..items import DatasetPrepareItem
+from ..scrapy_utils import  character_map
 import re
 
 guest_id = {}
@@ -34,8 +35,8 @@ class PsycheforumRuSpider(CrawlSpider):
                   # https://psycheforum.ru/forum/279-klinika-tvorchestvo-trolley/ # 	Клиника. Творчество троллей
                   ]
 
-    # Игнорируем ниже в rules
-# https://psycheforum.ru/forum/298-psihologicheskie-testy/ # Психологические тесты
+    # Игнорируем группы форумов ниже
+    # https://psycheforum.ru/forum/298-psihologicheskie-testy/ # Психологические тесты
     # https://psycheforum.ru/forum/34-obyavleniya-psihologov/ # Объявления психологов
     # https://psycheforum.ru/forum/12-filosofskiy-forum/ # Философский форум
     # https://psycheforum.ru/forum/14-forumy-po-parapsihologii/ # Форумы по парапсихологии
@@ -51,7 +52,22 @@ class PsycheforumRuSpider(CrawlSpider):
         Rule(LinkExtractor(restrict_xpaths='//li[contains(@class,"ipsPagination_next")]')),
         # Игнорируем ссылки на топики с комментариеми в адресе, т.к. это вторые и последующие старницы со списков форумов
         # Будет неправильный порядок парсинга страниц в теме, соответственно цепочки сообщений собьются
-        Rule(LinkExtractor(allow=r'/topic/', deny=r'/#comments'), callback='parse_topic', follow=False)
+        # Также игнорируем ссылки на правила и рекламу
+        # https://psycheforum.ru/topic/154794-polzovatelskoe-soglashenie/
+        # https://psycheforum.ru/topic/136149-kak-zaregistrirovatsya-na-forume-i-sozdat-temu/
+        # https://psycheforum.ru/topic/154744-reputaciya-polzovateley-foruma/
+        # https://psycheforum.ru/topic/154745-ignorirovanie-polzovateley/
+        # https://psycheforum.ru/topic/44267-platnye-uslugi-foruma/
+        # https://psycheforum.ru/topic/135209-nastroyka-uvedomleniy-s-foruma/
+        # https://psycheforum.ru/topic/154791-besplatnye-konsultacii-psihologov/
+        # https://psycheforum.ru/topic/154792-anonimnye-konsultacii-psihologov/
+        # https://psycheforum.ru/topic/154793-platnye-konsultacii-psihologov/
+        # https://psycheforum.ru/topic/44267-platnye-uslugi-foruma/
+        # https://psycheforum.ru/topic/3273-reklama-na-forume-po-psihologii/
+        # https://psycheforum.ru/topic/154705-o-psihologicheskom-forume/
+        # https://psycheforum.ru/topic/154746-administraciya-foruma/
+        # https://psycheforum.ru/topic/154795-otzyvy-i-predlozheniya/
+        Rule(LinkExtractor(allow=r'/topic/', deny=r'(\/#comments)|topic\/(154794|136149|154744|154745|44267|135209|154791|154792|154793|44267|3273|154705|154746|154795)-'), callback='parse_topic', follow=False)
     )
     # 'https://psycheforum.ru/forum/92-lyubovnyy-treugolnik/' # Раздел
     # 'li.ipsPagination_next' #Следующая страница
@@ -63,33 +79,33 @@ class PsycheforumRuSpider(CrawlSpider):
     def parse_topic(self, response):
         """ Функция извлекающая все страницы топка для загрузки и парсящая диалог
 
-            @url https://psycheforum.ru/topic/97703-lyubovnaya-addikciya/
-            @returns items 1
-            @scrapes author_id author_name text
-            @scrapes topic_id topic_name url html
-            """
+        @url https://psycheforum.ru/topic/97703-lyubovnaya-addikciya/
+        @returns items 30
+        @scrapes author_id author_name text
+        @scrapes topic_id topic_name url html
+        """
         global guest_index
         global guest_id
-        # Следующая страница
-        next_selectors = response.xpath('//li[contains(@class,"ipsPagination_next")]//@href')
-        for url in next_selectors.extract():
-            yield Request(url)
 
         # Извлекаем комментарии
         posts = response.xpath('//article')
         if len(posts) <= 2: # Короткие топики пропускаем, обычно в них пустой вопрос и пустой ответ или уточняющий вопрос
             pass
+
+        # Извлекаем название топика и его код
         topic_id = 0
         topic_name = ''
         try:
-            topic_id = re.search(r'/topic/(\d+)-\w+/', response.url).group(1)
-            topic_name = response.css('h1::text').extract_first()
-        except:
+            topic_regexp = re.search(r'/topic/(\d+)-\w+', response.url)
+            topic_id = topic_regexp.group(1)
+            topic_name =  ' '.join(response.xpath('//h1//text()').extract()).strip()
+        except Exception as err:
+            print('Ошибка парсинга топика', err)
             pass
-        pass
-        for idx, post in enumerate(posts):
+        # Парсим все топики
+        for post in posts:
             item = DatasetPrepareItem()
-            item['author_name'] = post.xpath('//h3/strong/a/text()').extract()
+            item['author_name'] = post.xpath('//h3/strong/a/text()').extract_first()
             author_id_regexp = re.search(r'/profile/(\d+)-\w+/', post.xpath('//h3/strong/a/@href').extract_first())
             if author_id_regexp is not None:
                 author_id = author_id_regexp.group(1)
@@ -100,15 +116,19 @@ class PsycheforumRuSpider(CrawlSpider):
                     guest_id[item['author_name']] = author_id
                     guest_index += 1
             item['author_id'] = author_id
-            text = post.xpath('//div[@data-role="commentContent"]//text()').extract_first().strip()
+            text_arr = post.xpath('//div[@data-role="commentContent"]//text()').extract()
+            text = ' '.join(text_arr).translate(character_map)
             if not text or len(text) == 1: # Для пустых и односимвольных пропускаем
                 continue
             item['text'] = text
             item['topic_id'] = topic_id
             item['topic_name'] = topic_name
             item['url'] = response.url
-            item['html'] = post.xpath('//div[@data-role="commentContent"]').extract()
-            print(item)
+            item['html'] = post.xpath('//div[@data-role="commentContent"]').extract_first().translate(character_map)
             yield item
 
+        # Следующая страница
+        next_topic_page = response.xpath('//li[contains(@class,"ipsPagination_next")]//@href').extract_first()
+        if next_topic_page:
+            yield Request(next_topic_page, callback=self.parse_topic)
 

@@ -25,7 +25,7 @@ pip install scrapy-pyppeteer
 * https://forum.psyche.guru/
 * https://www.psychologies.ru/forum/ (закрыт)
 
-Тестовый запуск `scrapy crawl psycheforum_ru -s CLOSESPIDER_ITEMCOUNT=5`
+Тестовый запуск на получение 5 записей `scrapy crawl psycheforum_ru -s CLOSESPIDER_ITEMCOUNT=5`
 
 ## Предварительная поготовка датасета на основе спарсеных файлов
 

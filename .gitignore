@@ -1,3 +1,11 @@
 .idea/
 venv/
 data/
+test/
+/*.zip
+/pretrain_gpt3.py
+/pretrain_transformers.py
+/generate_transformers.py
+/*_old.ipynb
+model-cache/
+

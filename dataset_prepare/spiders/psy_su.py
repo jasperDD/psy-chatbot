@@ -72,7 +72,21 @@ class PsySuSpider(scrapy.Spider):
 
 
     def parse_topic(self, response):
-        # TODO проверка что уже была эта страница распарсена. Т.к. есть дублеты например по топику 1962 - три раза или больше.
+        """ Функция извлекающая данные топика
+
+        @url https://psy.su/club/forum/topic/1869/
+        @returns items 20
+        @scrapes author_id author_name text
+        @scrapes topic_id topic_name url html
+        """
+
+        # Следующая страница топика
+        next_topic_page = get_next_topic_page(response)
+        if next_topic_page:
+            yield scrapy.Request(
+                response.urljoin(next_topic_page),
+                callback=self.parse_topic)
+
         topic_id, topic_name = get_topic_id_and_name(response)
 
         posts = response.css('table.forum tr')
@@ -125,10 +139,5 @@ class PsySuSpider(scrapy.Spider):
                 print('bad post:', author_name, idx, f'"{text}"', html)
         print('  parsed:', response.url, rdy, 'from', len(posts))
 
-        # Следующая страница топика
-        next_topic_page = get_next_topic_page(response)
-        if next_topic_page:
-            yield scrapy.Request(
-                response.urljoin(next_topic_page),
-                callback=self.parse_topic)
+
 

@@ -13,11 +13,20 @@ class Psyhelp24OrgSpider(CrawlSpider):
                   'https://psyhelp24.org/category/primer-psihologicheskoy-konsyltacii/page/2/'
                   ]
 
-    rules = ( # https://psyhelp24.org/psihologicheskaya-konsultatsiya-6/
-        Rule(LinkExtractor(allow=r'psihologicheskaya-konsultatsiya-'), callback='parse_item', follow=True),
+    rules = (
+        Rule(LinkExtractor(allow=r'psihologicheskaya-konsultatsiya-'), callback='parse_item'),
     )
 
     def parse_item(self, response):
+        """ Функция парсящая диалог из страницы консльтации
+        Проверка: scrapy check psyhelp24_org
+
+        @url https://psyhelp24.org/psihologicheskaya-konsultatsiya-6/
+        @returns items 1
+        @scrapes author_id author_name text
+        @scrapes topic_id topic_name url html
+        """
+        # Create
         posts = response.xpath('//div[@class="post-content"]/blockquote | //div[@class="post-content"]/p')
         topic_id = 0
         topic_name = ''
@@ -45,7 +54,7 @@ class Psyhelp24OrgSpider(CrawlSpider):
             text = '\n'.join(text_arr)
             if not text or len(text) == 1: # Для пустых и односимвольных пропускаем
                 continue
-            item['text'] = text.strip() if text[0] is not ':' else text[1:].strip()
+            item['text'] = text.strip() if text[0] != ':' else text[1:].strip()
             item['topic_id'] = topic_id
             item['topic_name'] = topic_name
             item['url'] = response.url

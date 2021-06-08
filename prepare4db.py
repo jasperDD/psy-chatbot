@@ -2,6 +2,7 @@
 import os
 import pandas as pd
 from bs4 import BeautifulSoup
+from scrapy.selector import Selector
 import pprint
 import re
 from transformers import AutoTokenizer # AutoModelForCausalLM,
@@ -158,13 +159,20 @@ for file in os.listdir(DATA_PATH):
     if file.endswith('.csv'):
         dataset_files.append(os.path.join(DATA_PATH, file))
 
-print(dataset_files)
+print('Список файлов датасетов', dataset_files)
 
 #%%
+##############################
+# ВАРИАНТ 2 создания цепочек диалогов
 # TODO В зависимости от адреса источника, определяем стиль CSS цитат и разбиваем все цитаты в сообщении на пары вопрос-ответ
 def get_quotes(post):
-    soup = BeautifulSoup(post['html'], 'html.parser')
+    post_sel = Selector(text=post['html'])
+    # soup = BeautifulSoup(post['html'], 'html.parser')
     if 'psy.su' in post['url']:
+        quotes = post_sel.xpath('//div[@class="text"]/div[@class="forum_quote"]')
+        if(len(quotes) > 1):
+            print(len(quotes), post['url'], '\n', quotes[0].get(),'\n', quotes[1].get())
+        return None
         quotes = soup.select('div.text > div.forum_quote') # soup.find_all("div", class_="forum_quote")
         if quotes:
             quote_el = quotes[0].find('div', class_='quote')
@@ -174,12 +182,10 @@ def get_quotes(post):
             if quote and text:
                 # print(post['url'], len(quotes),  quotes[0], '\n', soup.prettify())
                 # print('###q>', quote, '\nt>', text)
-                return quote, text
+                return [quote, text]
     return None
 
 #%%
-##############################
-# ВАРИАНТ 2 создания цепочек диалогов
 def dialog_chain_variant2(topic_data):
     topic_starter_id  = topic_data['author_id'].iloc[0]
     if topic_starter_id is None:
@@ -225,9 +231,7 @@ for file in dataset_files[-1:]:
     # %%
     for id in topic_ids:
         topic_data = df_topics[df_topics['topic_id'] == id]
-
         print(f'Количество сообщений в топике {id}: {len(topic_data)}')
-        # topic_dialog = [('','')]
         # Вариант цепочек 1
         # topic_dialog = dialog_chain_variant1(topic_data)
         # if topic_data is None:
@@ -235,6 +239,7 @@ for file in dataset_files[-1:]:
         # %%
         # Вариант цепочек 2
         topic_data = df_topics[df_topics['topic_id'] == 16]
+        print(topic_data['url'])
         print(topic_data)
         topic_dialog = dialog_chain_variant2(topic_data)
         # %%
@@ -266,3 +271,36 @@ df_dataset = pd.DataFrame(dataset)
 print(df_dataset)
 df_topics = df_dataset.to_csv(TCV_FILE, header=False, index=False)
 
+
+#%%
+html1 = """
+<div class="text">
+  <div class="forum_quote">
+    <div class="name">Захарова Людмила:</div>
+    <div class="quote">И главное. 
+      Как Вы работаете с "выгоревшими", каким образом можно мотивировать человека на смену стереотипа деятельности, "активировать"? 
+      Где ему, бедняге, взять силы, а главное возможности (в том числе и материальные), чтобы заняться любимым делом да ещё и добиться
+      соответствующего денежного вознаграждения (с учётом объективной реальности)?
+    </div>
+  </div>
+  ###Присоединяюсь к вопросу. И, пожалуйста, по содержанию. Коль уж Вы так любите самоутверждаться - нет проблем, но и содержание
+  добавляйте  :lol: . Первое мы как-нибудь переживем, а вторым воспользуемся. Или Вы из тех специалистов, для которых коллеги - 
+  конкуренты, и поэтому рот на замок, а слово "польза" вызывает у Вас мучительные переживания? 
+  <div class="forum_quote">
+    <div class="quote">
+      Читатели, читайте внимательно собственые высказывания типа "Но интересна не книжная теория, а просто опишите Ваши ощущения...".  
+      Вы когда перескакиваете на другое, так хоть как-то мотивируйте. Так что у Вас-то, Евгений? Вы просто пришли на форум рассказать о
+      себе? Или ищете коллег по специфике деятельности и просто неправильно запрос сформулировали, что Вам про собственные ощущения 
+      стали рассказывать?  :smile:
+    </div>
+  </div>
+  ####text 2
+</div>
+"""
+post_sel = Selector(text=html1)
+# quot2 = post_sel.xpath('//div[@class="text"]/div[@class="forum_quote"]')[1].get()
+# quot1 = post_sel.xpath('//div[@class="text"]/div[@class="forum_quote"]')[0].get()
+text_all = post_sel.xpath('.//div[@class="text"]/following-sibling').extract()
+
+    #.get_all()
+print(text_all)

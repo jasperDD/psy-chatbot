@@ -8,4 +8,5 @@ test/
 /generate_transformers.py
 /*_old.ipynb
 model-cache/
+crawls/
 

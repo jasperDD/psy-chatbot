@@ -27,7 +27,8 @@ CONCURRENT_REQUESTS = 4
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 #DOWNLOAD_DELAY = 3
-DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 2
+
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -46,15 +47,19 @@ DOWNLOAD_DELAY = 3
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    'dataset_prepare.middlewares.DatasetPrepareSpiderMiddleware': 543,
-#}
+SPIDER_MIDDLEWARES = {
+   # 'dataset_prepare.middlewares.DatasetPrepareSpiderMiddleware': 543,
+}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'dataset_prepare.middlewares.DatasetPrepareDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+   'scrapy.downloadermiddlewares.retry.RetryMiddleware': 500, # Сделали приоритет ниже, чем у собственного мидлеваре, для отлова банов
+   'dataset_prepare.middlewares.DatasetPrepareDownloaderMiddleware': 543,
+   # 'dataset_prepare.middlewares.CustomHttpProxyMiddleware': 600,
+   #'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None, #Disable scrapy userAgent middleware
+   # 'dataset_prepare.middlewares.CustomUserAgentMiddleware': 601,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -93,6 +98,7 @@ DOWNLOAD_DELAY = 3
 FEED_FORMAT="csv"
 # FEED_URI="../data/data_%(name)_%(time).csv"
 FEED_URI="./data/data_%(name)s.csv"
+
 
 LOG_LEVEL='INFO'
 USER_AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 YaBrowser/21.5.1.330 Yowser/2.5 Safari/537.36'

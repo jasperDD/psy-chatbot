@@ -149,3 +149,6 @@ class PsycheforumRuSpider(CrawlSpider):
 #2021-06-08 08:35:00 [scrapy.extensions.feedexport] INFO: Stored csv feed (229790 items) in: ./data/data_psycheforum_ru.csv
 
 #2021-06-08 12:26:14 [scrapy.extensions.logstats] INFO: Crawled 2986 pages (at 14 pages/min), scraped 66672 items (at 262 it
+
+# 2021-06-09 08:30:04 [scrapy.extensions.logstats] INFO: Crawled 19687 pages (at 13 pages/min), scraped 458447 items (at 170 items/min)
+# 2021-06-09 08:30:08 [scrapy.extensions.feedexport] INFO: Stored csv feed (458469 items) in: ./data/data_psycheforum_ru.csv

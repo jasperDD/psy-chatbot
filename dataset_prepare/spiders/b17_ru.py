@@ -77,4 +77,4 @@ class B17RuSpider(CrawlSpider):
 #scrapy crawl b17_ru -s JOBDIR=crawls/b17_ru-1
 # 2021-06-07 14:59:42 [scrapy.core.engine] INFO: Spider opened
 # 2021-06-07 18:39:56 [scrapy.extensions.feedexport] INFO: Stored csv feed (164052 items) in: ./data/data_b17_ru.csv
-#021-06-08 18:35:48 [scrapy.extensions.logstats] INFO: Crawled 6973 pages (at 13 pages/min), scraped 274673 items
+# 021-06-08 18:35:48 [scrapy.extensions.logstats] INFO: Crawled 6973 pages (at 13 pages/min), scraped 274673 items

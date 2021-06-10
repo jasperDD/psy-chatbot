@@ -139,16 +139,10 @@ class PsycheforumRuSpider(CrawlSpider):
 # scrapy crawl psycheforum_ru -s JOBDIR=crawls/psycheforum_ru-9 -L INFO
 # 2021-06-07 14:39:58 [scrapy.core.engine] INFO: Spider opened
 # 2021-06-07 16:13:07 [scrapy.extensions.feedexport] INFO: Stored csv feed (31869 items) in: ./data/data_psycheforum_ru.csv
-# 2021-06-07 16:24:52 [scrapy.core.scheduler] INFO: Resuming crawl (789 requests scheduled)
-#1:45
-#2021-06-07 16:24:52 [scrapy.core.engine] INFO: Spider opened
 #2021-06-07 18:39:53 [scrapy.extensions.feedexport] INFO: Stored csv feed (58495 items) in: ./data/data_psycheforum_ru.csv
-# 2:15
-
-#2021-06-07 21:43:34 [scrapy.core.scheduler] INFO: Resuming crawl (902 requests scheduled)
 #2021-06-08 08:35:00 [scrapy.extensions.feedexport] INFO: Stored csv feed (229790 items) in: ./data/data_psycheforum_ru.csv
-
-#2021-06-08 12:26:14 [scrapy.extensions.logstats] INFO: Crawled 2986 pages (at 14 pages/min), scraped 66672 items (at 262 it
-
-# 2021-06-09 08:30:04 [scrapy.extensions.logstats] INFO: Crawled 19687 pages (at 13 pages/min), scraped 458447 items (at 170 items/min)
+# 2021-06-08 12:26:14 [scrapy.extensions.logstats] INFO: Crawled 2986 pages (at 14 pages/min), scraped 66672 items (at 262 it
 # 2021-06-09 08:30:08 [scrapy.extensions.feedexport] INFO: Stored csv feed (458469 items) in: ./data/data_psycheforum_ru.csv
+# 2021-06-09 19:50:18 [scrapy.extensions.feedexport] INFO: Stored csv feed (196669 items)
+#2021-06-10 09:37:25 [scrapy.extensions.feedexport] INFO: Stored csv feed (263571 items) in: ./data/data_psycheforum_ru.csv
+#2021-06-11 01:58:14 [scrapy.extensions.feedexport] INFO: Stored csv feed (299892 items) in: ./data/data_psycheforum_ru.csv
